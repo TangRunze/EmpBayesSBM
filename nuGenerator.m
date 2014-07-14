@@ -1,8 +1,7 @@
 function nu = nuGenerator(K,d,nu_star,Sigma_star,mu_hat,Sigma_hat,...
     model,c,homophily,identifiability,init)
-
-% Generate valid nu based on constraints in S. Init=1 means we are
-% generating the initial nu, so c=1 leads to a normal (ASGE) initial
+% Generate valid nu based on constraints in S. Init = 1 means we are
+% generating the initial nu, so c = 1 leads to a normal (ASGE) initial
 % instead of Flat.
 
 flag = 0;

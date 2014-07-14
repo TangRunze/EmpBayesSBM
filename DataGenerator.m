@@ -1,11 +1,13 @@
 function [A,mu_hat,Sigma_hat,tau_hat,p_tau_hat] = ...
     DataGenerator(n,K,d,B,rho,g)
+% Generate data if there does not exist one, otherwise read the
+% existing data.
 
+% Calculate the sizes
 ni = n*rho;
 ni_start = cumsum(ni);
 ni_start = [1, ni_start(1:(end-1)) + 1];
 ni_end = cumsum(ni);
-
 
 if exist(['data/graph' int2str(g)],'file') == 0
     
@@ -50,6 +52,7 @@ if exist(['data/graph' int2str(g)],'file') == 0
     save(['data/graph' int2str(g)],'A','tau_hat','p_tau_hat',...
         'mu_hat','Sigma_hat');
 else
+    % Read the existing data
     data = load(['data/graph' int2str(iter) '.mat']);
     A = data.A;
 end
