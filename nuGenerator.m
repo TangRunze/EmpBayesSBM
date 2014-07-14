@@ -1,19 +1,22 @@
-function nu = nuGenerator(K,d,nu_star,Sigma_star,mu_hat,Sigma_hat,...
-    model,c,homophily,identifiability,init)
-% Generate valid nu based on constraints in S. Init = 1 means we are
-% generating the initial nu, so c = 1 leads to a normal (ASGE) initial
-% instead of Flat.
+function nu = nugenerator(nVertex, nBlock, dimLatentPosition, nuStar, ...
+    sigmaStar, muHat, sigmaHat, scaleCovariance, modelType, isHomophily,...
+    isIdentifiable, initType)
+% Generate valid nu based on constraints in S. initType = 1 means we are
+% generating the initial nu, so scaleCovariance = 1 leads to a normal 
+% (ASGE) initial instead of Flat.
 
 flag = 0;
-while (~flag) || ((c~=5) && (~CheckS(nu,homophily,identifiability)))
+while (~flag) || ((scaleCovariance ~= 5) && ...
+        (~checkconstraints(nu, isHomophily, isIdentifiable)))
     flag = 1;
-    if c == 1
-        if init == 1
+    if scaleCovariance == 1
+        if initType == 1
             % The initialization is still normal (ASGE) even if the
             % proposal & prior is Flat.
-            nu = mvnrnd(mu_hat, Sigma_hat);
-            while any(any((nu*nu' > ones(K,K))|(nu*nu' < zeros(K,K))))
-                nu = mvnrnd(mu_hat, Sigma_hat);
+            nu = mvnrnd(muHat, sigmaHat);
+            while any(any((nu*nu' > ones(nBlock, nBlock))|...
+                    (nu*nu' < zeros(nBlock, nBlock))))
+                nu = mvnrnd(muHat, sigmaHat);
             end
         else
             % When nu is uniformly distributed, it does not matter what is
@@ -23,68 +26,80 @@ while (~flag) || ((c~=5) && (~CheckS(nu,homophily,identifiability)))
             % be between 0 & 1), the norm of each nu should be less or
             % equal to 1, i.e. each element of nu should be located inside
             % the unit circle.
-            nu = 2*rand(K,d) - 1;
-            while any(any((nu*nu' > ones(K,K))|(nu*nu' < zeros(K,K))))
-                nu = 2*rand(K,d) - 1;
+            nu = 2*rand(nBlock, dimLatentPosition) - 1;
+            while any(any((nu*nu' > ones(nBlock, nBlock)) | ...
+                    (nu*nu' < zeros(nBlock, nBlock))))
+                nu = 2*rand(nBlock, dimLatentPosition) - 1;
             end
         end
-    elseif c == 2
-        if (model == 2) || (model == 4)
-            nu = mvnrnd(mu_hat, Sigma_hat);
-            while any(any((nu*nu' > ones(K,K))|(nu*nu' < zeros(K,K))))
-                nu = mvnrnd(mu_hat, Sigma_hat);
+    elseif scaleCovariance == 2
+        if (modelType == 2) || (modelType == 4)
+            nu = mvnrnd(muHat, sigmaHat);
+            while any(any((nu*nu' > ones(nBlock, nBlock)) | ...
+                    (nu*nu' < zeros(nBlock, nBlock))))
+                nu = mvnrnd(muHat, sigmaHat);
             end
-        elseif model == 3
-            nu = mvnrnd(mu_hat, Sigma_star/n);
-            while any(any((nu*nu' > ones(K,K))|(nu*nu' < zeros(K,K))))
-                nu = mvnrnd(mu_hat, Sigma_star/n);
+        elseif modelType == 3
+            nu = mvnrnd(muHat, sigmaStar/nVertex);
+            while any(any((nu*nu' > ones(nBlock, nBlock)) | ...
+                    (nu*nu' < zeros(nBlock, nBlock))))
+                nu = mvnrnd(muHat, sigmaStar/nVertex);
             end
-        elseif model == 1
-            nu = mvnrnd(nu_star, Sigma_star/n);
-            while any(any((nu*nu' > ones(K,K))|(nu*nu' < zeros(K,K))))
-                nu = mvnrnd(nu_star, Sigma_star/n);
-            end
-        end
-    elseif c == 3
-        tmp = reshape(repmat(T0,[d*d,1]),[d,d,K]);
-        if model == 2
-            nu = mvnrnd(mu_hat, Sigma_hat./tmp);
-            while any(any((nu*nu' > ones(K,K))|(nu*nu' < zeros(K,K))))
-                nu = mvnrnd(mu_hat, Sigma_hat./tmp);
-            end
-        elseif model == 3
-            nu = mvnrnd(mu_hat, Sigma_star./tmp/n);
-            while any(any((nu*nu' > ones(K,K))|(nu*nu' < zeros(K,K))))
-                nu = mvnrnd(mu_hat, Sigma_star./tmp/n);
-            end
-        elseif model == 1
-            nu = mvnrnd(nu_star, Sigma_star./tmp/n);
-            while any(any((nu*nu' > ones(K,K))|(nu*nu' < zeros(K,K))))
-                nu = mvnrnd(nu_star, Sigma_star./tmp/n);
+        elseif modelType == 1
+            nu = mvnrnd(nuStar, sigmaStar/nVertex);
+            while any(any((nu*nu' > ones(nBlock, nBlock)) | ...
+                    (nu*nu' < zeros(nBlock, nBlock))))
+                nu = mvnrnd(nuStar, sigmaStar/nVertex);
             end
         end
-    elseif c == 4
-        if model == 2
-            nu = mvnrnd(mu_hat, Sigma_hat/n);
-            while any(any((nu*nu' > ones(K,K))|(nu*nu' < zeros(K,K))))
-                nu = mvnrnd(mu_hat, Sigma_hat/n);
+    elseif scaleCovariance == 3
+        tmpMatrix = reshape(repmat(T0, ...
+            [dimLatentPosition*dimLatentPosition, 1]), ...
+            [dimLatentPosition, dimLatentPosition,nBlock]);
+        if modelType == 2
+            nu = mvnrnd(muHat, sigmaHat./tmpMatrix);
+            while any(any((nu*nu' > ones(nBlock, nBlock)) | ...
+                    (nu*nu' < zeros(nBlock, nBlock))))
+                nu = mvnrnd(muHat, sigmaHat./tmpMatrix);
             end
-        elseif model == 3
-            nu = mvnrnd(mu_hat, Sigma_star/(n^2));
-            while any(any((nu*nu' > ones(K,K))|(nu*nu' < zeros(K,K))))
-                nu = mvnrnd(mu_hat, Sigma_star/(n^2));
+        elseif modelType == 3
+            nu = mvnrnd(muHat, sigmaStar./tmpMatrix/nVertex);
+            while any(any((nu*nu' > ones(nBlock, nBlock)) | ...
+                    (nu*nu' < zeros(nBlock, nBlock))))
+                nu = mvnrnd(muHat, sigmaStar./tmpMatrix/nVertex);
             end
-        elseif model == 1
-            nu = mvnrnd(nu_star, Sigma_star/(n^2));
-            while any(any((nu*nu' > ones(K,K))|(nu*nu' < zeros(K,K))))
-                nu = mvnrnd(nu_star, Sigma_star/(n^2));
+        elseif modelType == 1
+            nu = mvnrnd(nuStar, sigmaStar./tmpMatrix/nVertex);
+            while any(any((nu*nu' > ones(nBlock, nBlock)) | ...
+                    (nu*nu' < zeros(nBlock, nBlock))))
+                nu = mvnrnd(nuStar, sigmaStar./tmpMatrix/nVertex);
             end
         end
-    elseif c == 5
-        if (model == 2) || (model ==3)
-            nu = mu_hat;
-        elseif model == 1
-            nu = nu_star;
+    elseif scaleCovariance == 4
+        if modelType == 2
+            nu = mvnrnd(muHat, sigmaHat/nVertex);
+            while any(any((nu*nu' > ones(nBlock, nBlock)) | ...
+                    (nu*nu' < zeros(nBlock, nBlock))))
+                nu = mvnrnd(muHat, sigmaHat/nVertex);
+            end
+        elseif modelType == 3
+            nu = mvnrnd(muHat, sigmaStar/(nVertex^2));
+            while any(any((nu*nu' > ones(nBlock, nBlock)) | ...
+                    (nu*nu' < zeros(nBlock, nBlock))))
+                nu = mvnrnd(muHat, sigmaStar/(nVertex^2));
+            end
+        elseif modelType == 1
+            nu = mvnrnd(nuStar, sigmaStar/(nVertex^2));
+            while any(any((nu*nu' > ones(nBlock, nBlock)) | ...
+                    (nu*nu' < zeros(nBlock, nBlock))))
+                nu = mvnrnd(nuStar, sigmaStar/(nVertex^2));
+            end
+        end
+    elseif scaleCovariance == 5
+        if (modelType == 2) || (modelType ==3)
+            nu = muHat;
+        elseif modelType == 1
+            nu = nuStar;
         end
     end
 end

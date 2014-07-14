@@ -1,27 +1,35 @@
-function [nu_tilde,f_num] = nuUpdate(tau,nu,mu_hat,Sigma_hat,nu_star,...
-    Sigma_star,A,f_den,K,d,c,model,homophily,identifiability)
+function [nuTilde, fNumerator] = updatenu(nVertex, tau, nu, muHat, ...
+    sigmaHat, nuStar, sigmaStar, adjMatrix, fDenominator, nBlock, ...
+    dimLatentPosition, scaleCovariance, modelType, isHomophily, ...
+    isIdentifiable)
 % Update latent positions nu
 
 %% --- Generate valid nu_tilde ---
-nu_tilde = nuGenerator(K,d,nu_star,Sigma_star,mu_hat,Sigma_hat,...
-    model,c,homophily,identifiability,0);
+nuTilde = nugenerator(nVertex, nBlock, dimLatentPosition, nuStar, ...
+    sigmaStar, muHat, sigmaHat, scaleCovariance, modelType, isHomophily,...
+    isIdentifiable, 0);
 
-%% -- pre-calculation of f = <nu_i,nu_j>^p*(1-<nu_i,nu_j>)^(1-p) (KxKx2) --
-f_num = fCalculator(nu_tilde);
+%% pre-calculation of f = <nu_i,nu_j>^p*(1-<nu_i,nu_j>)^(1-p)
+% (nBlock x nBlock x 2)
+fNumerator = fcalculator(nuTilde);
 
 %% --- Calculate the probability of accepting ---
-tmp_num = (1 - A).*log(f_num(tau,tau,1)) + A.*log(f_num(tau,tau,2));
-tmp_den = (1 - A).*log(f_den(tau,tau,1)) + A.*log(f_den(tau,tau,2));
-tmp = tmp_num - tmp_den;
-tmp = triu(tmp,1);
-logratio = sum(sum(tmp));
+tmpMatrixNumerator = (1 - adjMatrix).*log(fNumerator(tau, tau, 1)) + ...
+    adjMatrix.*log(fNumerator(tau, tau, 2));
+tmpMatrixDenominator = (1 - adjMatrix).*log(fDenominator(tau, tau, 1)) +...
+    adjMatrix.*log(fDenominator(tau, tau, 2));
+tmpMatrix = tmpMatrixNumerator - tmpMatrixDenominator;
+tmpMatrix = triu(tmpMatrix, 1);
+logRatio = sum(sum(tmpMatrix));
 
-if model == 4
-    for i = 1:K
-        logratio = logratio + ( - 1/2*(nu(i,:) - mu_hat(i,:))*...
-            ((Sigma_hat(:,:,i))\(nu(i,:) - mu_hat(i,:))'));
-        logratio = logratio - ( - 1/2*(nu_tilde(i,:) - mu_hat(i,:))*...
-            ((Sigma_hat(:,:,i))\(nu_tilde(i,:) - mu_hat(i,:))'));
+if modelType == 4
+    for iBlock = 1:nBlock
+        logRatio = logRatio + ( - 1/2*(nu(iBlock, :) - muHat(iBlock, :))...
+            *((sigmaHat(:, :, iBlock))\(nu(iBlock, :) - ...
+            muHat(iBlock, :))'));
+        logRatio = logRatio - ( - 1/2*(nuTilde(iBlock, :) - ...
+            muHat(iBlock, :))*((sigmaHat(:, :, iBlock))...
+            \(nuTilde(iBlock, :) - muHat(iBlock, :))'));
     end
 end
 
@@ -98,14 +106,14 @@ end
 %     end
 % end
 
-ratio = exp(logratio);
+ratio = exp(logRatio);
 
 %% --- Accept or reject the proposed status according to the ratio ---
-flag = rand;
+isAccepted = rand;
 
-if flag>ratio
-    nu_tilde = nu;
-    f_num = f_den;
+if (isAccepted > ratio)
+    nuTilde = nu;
+    fNumerator = fDenominator;
 end
 
 

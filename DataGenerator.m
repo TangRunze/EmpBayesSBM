@@ -1,39 +1,41 @@
-function [A,mu_hat,Sigma_hat,tau_hat,p_tau_hat] = ...
-    DataGenerator(n,K,d,B,rho,g)
+function [adjMatrix, muHat, sigmaHat, tauHat, pTauHat] = ...
+    datagenerator(nVertex, nBlock, dimLatentPosition, B, rho, iGraph)
 % Generate data if there does not exist one, otherwise read the
 % existing data.
 
 % Calculate the sizes
-ni = n*rho;
-ni_start = cumsum(ni);
-ni_start = [1, ni_start(1:(end-1)) + 1];
-ni_end = cumsum(ni);
+nVectorStar = nVertex*rho;
+nVectorStarStart = cumsum(nVectorStar);
+nVectorStarStart = [1, nVectorStarStart(1:(end-1)) + 1];
+nVectorStarEnd = cumsum(nVectorStar);
 
 if exist(['data/graph' int2str(iGraph)], 'file') == 0
     
-    disp(['Generating graph ' int2str(g) '...'])
+    disp(['Generating graph ' int2str(iGraph) '...'])
     
     % Part 1: Generate graph adjacency matrix.
-    A = zeros(n);
-    for i = 1:K
-        for j = i:K
-            A(ni_start(i):ni_end(i),ni_start(j):ni_end(j)) = ...
-                binornd(1,B(i,j),ni(i),ni(j));
+    adjMatrix = zeros(nVertex);
+    for iBlock = 1:nBlock
+        for jBlock = iBlock:nBlock
+            adjMatrix(nVectorStarStart(iBlock):nVectorStarEnd(iBlock), ...
+                nVectorStarStart(jBlock):nVectorStarEnd(jBlock)) = ...
+                binornd(1, B(iBlock,jBlock), nVectorStar(iBlock), ...
+                nVectorStar(jBlock));
         end
     end
-    A = triu(A,1);
-    A = A + A';
+    adjMatrix = triu(adjMatrix, 1);
+    adjMatrix = adjMatrix + adjMatrix';
     
     % Part 2: Obtain estimates from ASGE o GMM.
-    Xhat = asge(A,d);
+    xHat = asge(adjMatrix, dimLatentPosition);
     
-    gm = fitgmdist(Xhat,K,'Replicates',10);
+    gm = fitgmdist(xHat, nBlock, 'Replicates', 10);
     
-    tau_hat = cluster(gm,Xhat)';
+    tauHat = cluster(gm, xHat)';
     % pihat = gm.PComponents;
-    p_tau_hat = posterior(gm,Xhat)';
-    mu_hat = gm.mu;
-    Sigma_hat = gm.Sigma;
+    pTauHat = posterior(gm, xHat)';
+    muHat = gm.mu;
+    sigmaHat = gm.Sigma;
     
     % Plot
     % cl_nv = false(K,n);
@@ -49,10 +51,10 @@ if exist(['data/graph' int2str(iGraph)], 'file') == 0
     % legend('Cluster 1','Cluster 2','Cluster 3','Location','NW')
     
     % Save the data
-    save(['data/graph' int2str(g)],'A','tau_hat','p_tau_hat',...
-        'mu_hat','Sigma_hat');
+    save(['data/graph' int2str(iGraph)], 'adjMatrix', 'tauHat', 'pTauHat',...
+        'muHat', 'sigmaHat');
 else
     % Read the existing data
     data = load(['data/graph' int2str(iter) '.mat']);
-    A = data.A;
+    adjMatrix = data.adjMatrix;
 end

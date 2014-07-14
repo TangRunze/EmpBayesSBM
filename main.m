@@ -36,89 +36,89 @@ close all;
 %% --- Parameters Setting ---
 
 % head and tail of the Monte Carlo replicates
-gstart = 1;
-gend = 10;
+gStart = 1;
+gEnd = 1;
 
-% number of points
-n = 150;
+% number of vertices
+nVertex = 150;
 
 % number of blocks
-K = 3;
+nBlock = 3;
 
-% dimension of nu
-d = K - 1;
-
-% number of monte carlo replicates
-G = 100;
+% dimension of latent position nu
+dimLatentPosition = nBlock;
 
 % parameters in constraints checking
-% If homophily = 1, then it enforces homophily:
+% If isHomophily = 1, then it enforces homophily:
 % <nu_i,nu_j> <= <nu_i,nu_i>
-% If identifiability = 1, then it enforces identifiability:
+% If isIdentifiable = 1, then it enforces identifiability:
 % <nu_i,nu_i> >= <nu_j,nu_j> for i > j
-homophily = 1;
-identifiability = 0;
+isHomophily = 1;
+isIdentifiable = 0;
 
 % parameters in B = (0.5 - eps)*J + 2*eps*I
-eps = 0.1;
+epsilonInB = 0.1;
 
 % block probability matrix
-B = (0.5 - eps)*ones(K,K) + 2*eps*eye(K);
+B = (0.5 - epsilonInB)*ones(nBlock, nBlock) + 2*epsilonInB*eye(nBlock);
 
 % true block proportion
 rho = [1/3, 1/3, 1/3];
 
 % hyperparameters for the prior distribution for rho (1-by-K)
-theta = ones(1,K);
+theta = ones(1, nBlock);
 
 % true tau_star (1-by-n)
-tau_star = [];
-ni = n*rho;
-for i = 1:K
-    tau_star = [tau_star, i*ones(1,ni(i))];
+tauStar = [];
+nVectorStar = nVertex*rho;
+for i = 1:nBlock
+    tauStar = [tauStar, i*ones(1, nVectorStar(i))];
 end
 
 % true nu (K-by-d)
-nu_star = chol(B)';
-if ~CheckS(nu_star,homophily,0)
-    error('The true latent positions nu derived from the probability matrix B does not satisfy the constraints in S!');
+nuStar = chol(B)';
+if (~checkconstraints(nuStar, isHomophily,0))
+    error(['The true latent positions nu derived from the probability' ...
+        'matrix B does not satisfy the constraints in S!']);
 end
 
 % true spectral graph embedding Xhat (K-by-d)
-Xhat = asge(B,d);
+xHat = asge(B, dimLatentPosition);
 
 % true covariance matrix Sigma_star (d-by-d-by-K)
-Sigma_star = CovarianceCalculator(Xhat,rho);
+sigmaStar = covariancecalculator(xHat, rho);
 
 %% Monte Carlo Simulation
 
-% type of c, which controls the covariance matrix in the prior.
-% c = 1:  0
-% c = 2:  n
-% c = 3:  n*n_k
-% c = 4:  n^2
-% c = 5:  Infinity
-MaxC = 5;
+% type of scaleCovariance, which controls the size of the covariance matrix
+% in the prior.
+% scaleCovariance = 1:  0
+% scaleCovariance = 2:  n
+% scaleCovariance = 3:  n*n_k
+% scaleCovariance = 4:  n^2
+% scaleCovariance = 5:  Infinity
+MAX_SCALE_COVARIANCE = 5;
 
 % type of model
-% model = 1:    Gold
-% model = 2:    ASGE
-% model = 3:    ASGE1
-% model = 4:    Flat
-MaxModel = 3;
+% modelType = 1:    Gold
+% modelType = 2:    ASGE
+% modelType = 3:    ASGE1
+% modelType = 4:    Flat
+MAX_MODEL_TYPE = 3;
 
 % number of iterations in burn-in part
-NBurnIn = 19000;
-% NBurnIn = 10;
+nBurnIn = 19000;
+% nBurnIn = 100;
 
 % Take the last NConverge iterations as the results after the burn-in part
-NConverge = 1000;
-% NGS = 10;
+nConverge = 1000;
+% nConverge = 100;
 
-for g = gstart:gend
+for iGraph = gStart:gEnd
     % Generate data if there does not exist one, otherwise read the
     % existing data.
-    [A,mu_hat,Sigma_hat,tau_hat,p_tau_hat] = DataGenerator(n,K,d,B,rho,g);
+    [adjMatrix, muHat, sigmaHat, tauHat, pTauHat] = ...
+        datagenerator(nVertex, nBlock, dimLatentPosition, B, rho, iGraph);
     % Adjacency matrix A (n-by-n) symmetric
     % cluster means mu_hat (K-by-d)
     % cluster covariances Sigma_hat (d-by-d-by-K)
@@ -127,40 +127,49 @@ for g = gstart:gend
     
     % Reorder the blocks when they do not satisfy the identifiability
     % constraints.
-    [mu_hat,Sigma_hat,tau_hat,p_tau_hat] = ...
-        ChangeOrder(mu_hat,Sigma_hat,tau_hat,p_tau_hat,K);
+    [muHat, sigmaHat, tauHat, pTauHat] = changeorder(muHat, sigmaHat, ...
+        tauHat, pTauHat, nBlock);
     
     % Project the estimated mu_hat onto the neareast point in the feasible
     % region.
-    if (~CheckS(mu_hat,homophily,identifiability))
-        tmp = mu_hat';
-        tmp = tmp(:);
-        tmp = fmincon(@(x) ProjectObj(x,tmp),tmp,[],[],[],[],...
-            -ones(d*K,1),ones(d*K,1),...
-            @(x) ProjectCon(x,K,d,homophily,identifiability));
-        mu_hat = reshape(tmp,[d,K])';
+    if (~checkconstraints(muHat, isHomophily, isIdentifiable))
+        tmpMuHat = muHat';
+        tmpMuHat = tmpMuHat(:);
+        tmpMuHat = fmincon(@(x) projectionobjectivefun(x,tmpMuHat), ...
+            tmpMuHat, [], [], [], [], ...
+            - ones(dimLatentPosition*nBlock, 1), ...
+            ones(dimLatentPosition*nBlock, 1), @(x) ...
+            projectionconditionfun(x, nBlock, dimLatentPosition, ...
+            isHomophily, isIdentifiable));
+        muHat = reshape(tmpMuHat, [dimLatentPosition, nBlock])';
+        clear tmpMuHat;
     end
     
     % Run the algorithm to estimate the block membership of vertices
-    for model = 2
-        for c = 1:2
-            savefile = ['./results/results-SBM-model' num2str(model) ...
-                '-c' num2str(c) '-graph' num2str(g) '.mat'];
-            if exist(savefile,'file') == 0
-                if (model == 1) || (c == 5)
-                    NConverge = 1000;
-                    [error_rate,tau,tau_result] = MC(n,K,d,A,mu_hat,...
-                        Sigma_hat,tau_hat,rho,tau_star,nu_star,...
-                        Sigma_star,theta,NBurnIn,NConverge,c,model,...
-                        homophily,identifiability);
+    for modelType = 2
+        for scaleCovariance = 2
+            savefile = ['./results/results-SBM-model' ...
+                num2str(modelType) '-scale' num2str(scaleCovariance) ...
+                '-graph' num2str(iGraph) '.mat'];
+            if exist(savefile, 'file') == 0
+                if (modelType == 1) || (scaleCovariance == 5)
+                    nConverge = 1000;
+                    [errorRate, tau, tauResult] = mcmc1chain(nVertex, ...
+                        nBlock, dimLatentPosition, adjMatrix, muHat, ...
+                        sigmaHat, tauHat, rho, tauStar, nuStar, ...
+                        sigmaStar, theta, nBurnIn, nConverge, ...
+                        scaleCovariance, modelType, isHomophily, ...
+                        isIdentifiable);
                 else
-                    NConverge = 500;
-                    [error_rate,tau,tau_result] = MC2(n,K,d,A,mu_hat,Sigma_hat,...
-                        tau_hat,p_tau_hat,rho,tau_star,nu_star,...
-                        Sigma_star,theta,NBurnIn,NConverge,c,model,...
-                        homophily,identifiability);
+                    nConverge = 500;
+                    [errorRate, tau, tauResult] = mcmc2chains(nVertex, ...
+                        nBlock, dimLatentPosition, adjMatrix, muHat, ...
+                        sigmaHat, tauHat, pTauHat, rho, tauStar, nuStar,...
+                        sigmaStar, theta, nBurnIn, nConverge, ...
+                        scaleCovariance, modelType, isHomophily, ...
+                        isIdentifiable);
                 end
-                parsave(savefile,error_rate,tau,tau_result);
+                parsave(savefile, errorRate, tau, tauResult);
             end
         end
     end
