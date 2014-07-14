@@ -9,7 +9,7 @@ nVectorStarStart = cumsum(nVectorStar);
 nVectorStarStart = [1, nVectorStarStart(1:(end-1)) + 1];
 nVectorStarEnd = cumsum(nVectorStar);
 
-if exist(['data/graph' int2str(iGraph)], 'file') == 0
+if exist(['data/graph' int2str(iGraph) '.mat'], 'file') == 0
     
     disp(['Generating graph ' int2str(iGraph) '...'])
     
