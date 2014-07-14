@@ -1,0 +1,8 @@
+# History files
+.Rhistory
+
+# MATLAB data files
+.mat
+
+# Bash files
+.sh
