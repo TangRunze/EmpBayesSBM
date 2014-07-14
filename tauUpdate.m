@@ -1,4 +1,5 @@
-function [tau,T] = tauUpdate(tau,A,T,theta,rho,f,n,K,model)
+function [tau, nVectorHat] = tauUpdate(tau, adjMatrix, nVectorHat, ...
+    theta, rho, f, nVertex, nBlock, modelType)
 % Update block memberships tau.
 
 % version1
@@ -51,13 +52,15 @@ function [tau,T] = tauUpdate(tau,A,T,theta,rho,f,n,K,model)
 % tau_new = zeros(1,n);
 % prob2 = zeros(K,n);
 
-if model == 1
-    for i = 1:n
-        tmp = (1 - A(i*ones(1,K),:)) .* f(:,tau(1:n),1) + A(i*ones(1,K),:) .* f(:,tau(1:n),2);
-        tmp(:,i) = [];
-        prob = prod(tmp,2) .* rho(1:K)';
+if modelType == 1
+    for iVertex = 1:nVertex
+        tmpMatrix = (1 - adjMatrix(iVertex*ones(1, nBlock), :)).*...
+            f(:, tau(1:nVertex), 1) + ...
+            adjMatrix(iVertex*ones(1, nBlock), :).*f(:, tau(1:nVertex), 2);
+        tmpMatrix(:, iVertex) = [];
+        prob = prod(tmpMatrix, 2).*rho(1:nBlock)';
         % make sure all greater than zero and normalize
-        prob(prob<0) = 0;
+        prob(prob < 0) = 0;
         prob = prob/sum(prob);
         
         %     prob2(:,i) = prob;
@@ -66,15 +69,15 @@ if model == 1
         %     T(tau_new(i)) = T(tau_new(i)) + 1;
         %     T(tau(i)) = T(tau(i)) - 1;
         
-        T(tau(i)) = T(tau(i)) - 1;
+        nVectorHat(tau(iVertex)) = nVectorHat(tau(iVertex)) - 1;
         
-        ind_tmp = 1;
-        r = rand;
-        while r > prob(ind_tmp)
-            ind_tmp = ind_tmp + 1;
-            prob(ind_tmp) = prob(ind_tmp) + prob(ind_tmp-1);
+        tmpIndex = 1;
+        randomNumber = rand;
+        while randomNumber > prob(tmpIndex)
+            tmpIndex = tmpIndex + 1;
+            prob(tmpIndex) = prob(tmpIndex) + prob(tmpIndex - 1);
         end
-        tau(i) = ind_tmp;
+        tau(iVertex) = tmpIndex;
 %         if rand<prob(1)
 %             tau(i) = 1;
 %         else
@@ -82,24 +85,26 @@ if model == 1
 %         end
         
         %     tau(i) = randsample(K,1,true,prob);
-        T(tau(i)) = T(tau(i)) + 1;
+        nVectorHat(tau(iVertex)) = nVectorHat(tau(iVertex)) + 1;
     end
 else
-    for i = 1:n
-        T(tau(i)) = T(tau(i)) - 1;
+    for iVertex = 1:nVertex
+        nVectorHat(tau(iVertex)) = nVectorHat(tau(iVertex)) - 1;
         
-        f_gamma = T + theta;
+        fGamma = nVectorHat + theta;
         
 %         tmp1 = repmat(theta+T,[2,1]) + eye(2);
 %         tmp2 = prod(gamma(tmp1),2);
 %         tmp2 = tmp2/sum(tmp2);
         
         
-        tmp = (1 - A(i*ones(1,K),:)) .* f(:,tau(1:n),1) + A(i*ones(1,K),:) .* f(:,tau(1:n),2);
-        tmp(:,i) = [];
-        prob = prod(tmp,2) .* f_gamma';
+        tmpMatrix = (1 - adjMatrix(iVertex*ones(1, nBlock), :)).*...
+            f(:, tau(1:nVertex), 1) + ...
+            adjMatrix(iVertex*ones(1, nBlock), :).*f(:, tau(1:nVertex), 2);
+        tmpMatrix(:,iVertex) = [];
+        prob = prod(tmpMatrix, 2).*fGamma';
         % make sure all greater than zero and normalize
-        prob(prob<0) = 0;
+        prob(prob < 0) = 0;
         prob = prob/sum(prob);
         
         %     prob2(:,i) = prob;
@@ -108,13 +113,13 @@ else
         %     T(tau_new(i)) = T(tau_new(i)) + 1;
         %     T(tau(i)) = T(tau(i)) - 1;
         
-        ind_tmp = 1;
-        r = rand;
-        while r > prob(ind_tmp)
-            ind_tmp = ind_tmp + 1;
-            prob(ind_tmp) = prob(ind_tmp) + prob(ind_tmp-1);
+        tmpIndex = 1;
+        randomNumber = rand;
+        while randomNumber > prob(tmpIndex)
+            tmpIndex = tmpIndex + 1;
+            prob(tmpIndex) = prob(tmpIndex) + prob(tmpIndex - 1);
         end
-        tau(i) = ind_tmp;
+        tau(iVertex) = tmpIndex;
         
 %         if rand<prob(1)
 %             tau(i) = 1;
@@ -123,7 +128,7 @@ else
 %         end
         
         %     tau(i) = randsample(K,1,true,prob);
-        T(tau(i)) = T(tau(i)) + 1;
+        nVectorHat(tau(iVertex)) = nVectorHat(tau(iVertex)) + 1;
     end
 end
 

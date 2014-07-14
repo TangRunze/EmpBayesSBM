@@ -1,25 +1,26 @@
-function [c,ceq] = ProjectCon(x,K,d,homophily,identifiability)
+function [c, ceq] = ProjectCon(x, nBlock, dimLatentPosition, ...
+    isHomophily, isIdentifiable)
 % Condition functions in projection optimization problem
 
 %% Pre-calculation
-nu_tmp = zeros(K,d);
-for i = 1:K
-    for j = 1:d
-        nu_tmp(i,j) = x((i-1)*d+j);
+tmpNu = zeros(nBlock, dimLatentPosition);
+for iBlock = 1:nBlock
+    for jBlock = 1:dimLatentPosition
+        tmpNu(iBlock, jBlock) = x((iBlock - 1)*dimLatentPosition + jBlock);
     end
 end
-B = nu_tmp*nu_tmp';
+B = tmpNu*tmpNu';
 
 %% Inequalities
 c = [];
-for i = 1:K
-    for j = 1:K
-        c = [c; -B(i,j); B(i,j)-1];
-        if (homophily == 1)
-            c = [c; -B(i,i)+B(i,j)];
+for iBlock = 1:nBlock
+    for jBlock = 1:nBlock
+        c = [c; - B(iBlock, jBlock); B(iBlock, jBlock) - 1];
+        if (isHomophily == 1)
+            c = [c; - B(iBlock, iBlock) + B(iBlock, jBlock)];
         end
-        if (identifiability == 1) && (i > j)
-            c = [c; -B(i,i)+B(j,j)];
+        if (isIdentifiable == 1) && (iBlock > jBlock)
+            c = [c; - B(iBlock, iBlock) + B(jBlock, jBlock)];
         end
     end
 end

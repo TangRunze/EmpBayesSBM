@@ -1,84 +1,87 @@
-function [error_rate_map,tau_map,tau_result] = MC(n,K,d,A,mu_hat,...
-    Sigma_hat,tau_hat,rho,tau_star,nu_star,Sigma_star,theta,NBurnIn,...
-    NConverge,c,model,homophily,identifiability)
+function [errorRateMap, tauMap, tauResult] = MC(nVertex, nBlock, ...
+    dimLatentPosition, adjMatrix, muHat, sigmaHat, tauHat, rho, ...
+    tauStar, nuStar, sigmaStar, theta, nBurnIn, nConverge, ...
+    scaleCovariance, modelType, isHomophily, isIdentifiable)
 % Inference using 1 MCMC chain.
 
 rng shuffle;
 
+nMetropolistHastings = 10;
+
 %% --- Initialization ---
 % Take the last NConverge iterations as the results after the burn-in part
-tau_result = zeros(NConverge,n);
+tauResult = zeros(nConverge, nVertex);
 
-% initialization of tau, use the estimated tau_hat from asge directly
-tau = tau_hat;
+% initialization of tau, use the estimated tauHat from asge directly
+tau = tauHat;
 
 % calculation of T (1-by-K), number of vertices in each block
-T = zeros(1,K);
-for i = 1:K
-    T(i) = sum(tau == i);
-end
-
-% calculation of T (1-by-K), number of vertices in each block for the true
-% labels
-T0 = zeros(1,K);
-for i = 1:K
-    T0(i) = sum(tau_star == i);
+nVectorHat = zeros(1, nBlock);
+for iBlock = 1:nBlock
+    nVectorHat(iBlock) = sum(tau == iBlock);
 end
 
 % Generate valid initialial nu (K-by-d)
-nu = nuGenerator(K,d,nu_star,Sigma_star,mu_hat,Sigma_hat,...
-    model,c,homophily,identifiability,1);
+nu = nuGenerator(nVertex, nBlock, dimLatentPosition, nuStar, sigmaStar, ...
+    muHat, sigmaHat, scaleCovariance, modelType, isHomophily, ...
+    isIdentifiable, 1);
 
 % pre-calculation of f = <nu_i,nu_j>^p*(1-<nu_i,nu_j>)^(1-p) (KxKx2)
 f = fCalculator(nu);
 
 %% Burn-in Part
 iter = 0;
-while (iter < NBurnIn)
+while (iter < nBurnIn)
     iter = iter + 1;
     % --- Gibbs Sampling of tau ---
-    [tau,T] = tauUpdate(tau,A,T,theta,rho,f,n,K,model);
+    [tau, nVectorHat] = tauUpdate(tau, adjMatrix, nVectorHat, theta, ...
+        rho, f, nVertex, nBlock, modelType);
     % --- Metropolis-Hasting of nu ---
-    if c~=5
-        for NMH = 1:10
-            [nu,f] = nuUpdate(tau,nu,mu_hat,Sigma_hat,nu_star,...
-                Sigma_star,A,f,K,d,c,model,homophily,identifiability);
+    if (scaleCovariance ~= 5)
+        for iMetropolisHastings = 1:nMetropolistHastings
+            [nu, f] = nuUpdate(nVertex, tau, nu, muHat, sigmaHat, ...
+                nuStar, sigmaStar, adjMatrix, f, nBlock, ...
+                dimLatentPosition, scaleCovariance, modelType, ...
+                isHomophily, isIdentifiable);
         end
     end
 end
 
 %% Ergodic Average
 iter = 0;
-while (iter < NConverge)
+while (iter < nConverge)
     iter = iter + 1;
     % --- Gibbs Sampling of tau ---
-    [tau,T] = tauUpdate(tau,A,T,theta,rho,f,n,K,model);
+    [tau, nVectorHat] = tauUpdate(tau, adjMatrix, nVectorHat, theta, ...
+        rho, f, nVertex, nBlock, modelType);
     % --- Metropolis-Hasting of nu ---
-    if c~=5
-        for NMH = 1:10
-            [nu,f] = nuUpdate(tau,nu,mu_hat,Sigma_hat,nu_star,...
-                Sigma_star,A,f,K,d,c,model,homophily,identifiability);
+    if (scaleCovariance ~= 5)
+        for iMetropolisHastings = 1:nMetropolistHastings
+            [nu, f] = nuUpdate(nVertex, tau, nu, muHat, sigmaHat, ...
+                nuStar, sigmaStar, adjMatrix, f, nBlock, ...
+                dimLatentPosition, scaleCovariance, modelType, ...
+                isHomophily, isIdentifiable);
         end
     end
-    tau_result(iter,:) = tau;
+    tauResult(iter, :) = tau;
 end
 
-tau_map = mode(tau_result);
+tauMap = mode(tauResult);
 
-error_rate_map = n;
-permutation = perms(1:K);
-for i = 1:factorial(K)
-    pos = permutation(i,:);
-    tau_tmp = tau_map;
-    for j = 1:K
-        nv = (tau_map == pos(j));
-        tau_tmp(nv) = j;
+errorRateMap = nVertex;
+permutation = perms(1:nBlock);
+for iFactorial = 1:factorial(nBlock)
+    position = permutation(iFactorial, :);
+    tmpTau = tauMap;
+    for jBlock = 1:nBlock
+        nv = (tauMap == position(jBlock));
+        tmpTau(nv) = jBlock;
     end
-    if sum(tau_star~=tau_tmp) < error_rate_map
-        error_rate_map = sum(tau_star~=tau_tmp);
+    if sum(tauStar ~= tmpTau) < errorRateMap
+        errorRateMap = sum(tauStar ~= tmpTau);
     end
 end
 
-error_rate_map = error_rate_map/n;
+errorRateMap = errorRateMap/nVertex;
 
 

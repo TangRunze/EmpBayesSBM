@@ -1,20 +1,21 @@
-function Sigma = CovarianceCalculator(nu,rho)
+function sigma = CovarianceCalculator(nu, rho)
 % Input nu and rho, where nu is the latent positions and rho is block
 % proportion, CovarianceCalculator returns a list of covariance matrices.
 
-[K, d] = size(nu);
-Delta = zeros(d,d);
-for i = 1:K
-    Delta = Delta + nu(i,:)'*nu(i,:)*rho(i);
+[nBlock, dimLatentPosition] = size(nu);
+Delta = zeros(dimLatentPosition, dimLatentPosition);
+for iBlock = 1:nBlock
+    Delta = Delta + nu(iBlock,:)'*nu(iBlock,:)*rho(iBlock);
 end
 
-Sigma = zeros(d,d,K);
-for i = 1:K
-    tmp1 = nu(i,:) * nu';
-    tmp2 = tmp1 - tmp1.^2;
-    B = zeros(d,d)';
-    for j = 1:K
-        B = B + nu(j,:)'*nu(j,:)*tmp2(j)*rho(j);
+sigma = zeros(dimLatentPosition, dimLatentPosition, nBlock);
+for iBlock = 1:nBlock
+    tmpVariable1 = nu(iBlock, :)*nu';
+    tmpVariable2 = tmpVariable1 - tmpVariable1.^2;
+    B = zeros(dimLatentPosition, dimLatentPosition)';
+    for jBlock = 1:nBlock
+        B = B + nu(jBlock, :)'*nu(jBlock, :)*tmpVariable2(jBlock)*...
+            rho(jBlock);
     end
-    Sigma(:,:,i) = Delta\B/Delta;
+    sigma(:, :, iBlock) = Delta\B/Delta;
 end

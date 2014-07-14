@@ -1,6 +1,6 @@
-function val = ProjectObj(x,x_hat)
+function val = ProjectObj(x, xHat)
 % Objective functions in projection optimization problem
 
-val = norm(x - x_hat);
+val = norm(x - xHat);
 
 end
