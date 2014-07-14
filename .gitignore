@@ -4,5 +4,8 @@
 # MATLAB data files
 .mat
 
+# MATLAB backup files
+.asv
+
 # Bash files
 .sh
