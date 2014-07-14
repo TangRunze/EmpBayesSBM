@@ -1,3 +1,25 @@
+
+% EmpBayesSBM implements an empirical Bayes methodology for estimation of block
+% memberships of vertices in a random graph drawn from the stochastic
+% blockmodel.
+
+% Inference for the stochastic blockmodel is an interesting direction in
+% the statistical community, as well as in various application domains such
+% as social networks, citation networks, brain connectivity networks, etc.
+% Recent theoretical developments have shown that a random dot product
+% latent position graph formulation of the stochastic blockmodel informs a
+% mixture of normal distributions for the adjacency spectral embedding.
+% We employ this new theory to provide an empirical Bayes methodology for
+% estimation of block memberships of vertices in a random graph drawn from
+% the stochastic blockmodel. The posterior inference is conducted using a
+% Metropolis-within-Gibbs algorithm.
+
+% Author: Runze Tang
+% Johns Hopkins University
+% Email: tangrunze@gmail.com
+% Website: https://github.com/wonderforyou/EmpBayesSBM
+% Oct 2013; Last revision: 14-July-2014
+
 clear all;
 close all;
 
