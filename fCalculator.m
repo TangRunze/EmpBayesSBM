@@ -1,4 +1,4 @@
-function f = fCalculator(nu)
+function f = fcalculator(nu)
 % pre-calculation of f = <nu_i,nu_j>^p*(1-<nu_i,nu_j>)^(1-p) (KxKx2)
 
 nBlock = size(nu, 1);

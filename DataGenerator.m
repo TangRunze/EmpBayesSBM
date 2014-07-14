@@ -1,5 +1,5 @@
 function [adjMatrix, muHat, sigmaHat, tauHat, pTauHat] = ...
-    DataGenerator(nVertex, nBlock, dimLatentPosition, B, rho, iGraph)
+    datagenerator(nVertex, nBlock, dimLatentPosition, B, rho, iGraph)
 % Generate data if there does not exist one, otherwise read the
 % existing data.
 

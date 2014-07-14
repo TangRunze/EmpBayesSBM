@@ -1,4 +1,4 @@
-function sigma = CovarianceCalculator(nu, rho)
+function sigma = covariancecalculator(nu, rho)
 % Input nu and rho, where nu is the latent positions and rho is block
 % proportion, CovarianceCalculator returns a list of covariance matrices.
 
