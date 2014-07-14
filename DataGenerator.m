@@ -9,7 +9,7 @@ ni_start = cumsum(ni);
 ni_start = [1, ni_start(1:(end-1)) + 1];
 ni_end = cumsum(ni);
 
-if exist(['data/graph' int2str(g)],'file') == 0
+if exist(['data/graph' int2str(iGraph)], 'file') == 0
     
     disp(['Generating graph ' int2str(g) '...'])
     
