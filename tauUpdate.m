@@ -1,4 +1,5 @@
 function [tau,T] = tauUpdate(tau,A,T,theta,rho,f,n,K,model)
+% Update block memberships tau.
 
 % version1
 % prob = ones(1,K);

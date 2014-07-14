@@ -1,5 +1,6 @@
 function [nu_tilde,f_num] = nuUpdate(tau,nu,mu_hat,Sigma_hat,nu_star,...
     Sigma_star,A,f_den,K,d,c,model,homophily,identifiability)
+% Update latent positions nu
 
 %% --- Generate valid nu_tilde ---
 nu_tilde = nuGenerator(K,d,nu_star,Sigma_star,mu_hat,Sigma_hat,...

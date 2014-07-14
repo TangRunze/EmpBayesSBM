@@ -1,4 +1,5 @@
 function [c,ceq] = ProjectCon(x,K,d,homophily,identifiability)
+% Condition functions in projection optimization problem
 
 %% Pre-calculation
 nu_tmp = zeros(K,d);

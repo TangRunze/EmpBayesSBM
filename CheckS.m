@@ -1,5 +1,4 @@
 function ac = CheckS(nu,homophily,identifiability)
-
 % Check if nu*nu' satisfies the probability constraints
 % 0 <= <nu_i, nu_j> <= 1
 % If homophily = 1, then it also enforces homophily

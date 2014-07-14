@@ -1,3 +1,25 @@
+
+% EmpBayesSBM implements an empirical Bayes methodology for estimation of
+% block memberships of vertices in a random graph drawn from the stochastic
+% blockmodel.
+
+% Inference for the stochastic blockmodel is an interesting direction in
+% the statistical community, as well as in various application domains such
+% as social networks, citation networks, brain connectivity networks, etc.
+% Recent theoretical developments have shown that a random dot product
+% latent position graph formulation of the stochastic blockmodel informs a
+% mixture of normal distributions for the adjacency spectral embedding.
+% We employ this new theory to provide an empirical Bayes methodology for
+% estimation of block memberships of vertices in a random graph drawn from
+% the stochastic blockmodel. The posterior inference is conducted using a
+% Metropolis-within-Gibbs algorithm.
+
+% Author: Runze Tang
+% Johns Hopkins University
+% Email: tangrunze@gmail.com
+% Website: https://github.com/wonderforyou/EmpBayesSBM
+% Oct 2013; Last revision: 14-July-2014
+
 clear all;
 close all;
 
@@ -24,16 +46,20 @@ n = 150;
 K = 3;
 
 % dimension of nu
-d = K;
+d = K - 1;
 
 % number of monte carlo replicates
 G = 100;
 
-% constraints parameters
+% parameters in constraints checking
+% If homophily = 1, then it enforces homophily:
+% <nu_i,nu_j> <= <nu_i,nu_i>
+% If identifiability = 1, then it enforces identifiability:
+% <nu_i,nu_i> >= <nu_j,nu_j> for i > j
 homophily = 1;
 identifiability = 0;
 
-% epsilon parameters in B = (0.5 - eps)*J + 2*eps*I
+% parameters in B = (0.5 - eps)*J + 2*eps*I
 eps = 0.1;
 
 % block probability matrix
@@ -55,16 +81,18 @@ end
 % true nu (K-by-d)
 nu_star = chol(B)';
 if ~CheckS(nu_star,homophily,0)
-    error('The true nu does not satisfy the constraints in S');
+    error('The true latent positions nu derived from the probability matrix B does not satisfy the constraints in S!');
 end
 
-% true Sigma_star (d-by-d-by-K)
-Xhat = asge(B,K);
+% true spectral graph embedding Xhat (K-by-d)
+Xhat = asge(B,d);
+
+% true covariance matrix Sigma_star (d-by-d-by-K)
 Sigma_star = CovarianceCalculator(Xhat,rho);
 
 %% Monte Carlo Simulation
 
-% type of c
+% type of c, which controls the covariance matrix in the prior.
 % c = 1:  0
 % c = 2:  n
 % c = 3:  n*n_k
@@ -79,7 +107,7 @@ MaxC = 5;
 % model = 4:    Flat
 MaxModel = 3;
 
-% number of Burn-In part
+% number of iterations in burn-in part
 NBurnIn = 19000;
 % NBurnIn = 10;
 
@@ -88,7 +116,8 @@ NConverge = 1000;
 % NGS = 10;
 
 for g = gstart:gend
-
+    % Generate data if there does not exist one, otherwise read the
+    % existing data.
     [A,mu_hat,Sigma_hat,tau_hat,p_tau_hat] = DataGenerator(n,K,d,B,rho,g);
     % Adjacency matrix A (n-by-n) symmetric
     % cluster means mu_hat (K-by-d)
@@ -112,6 +141,7 @@ for g = gstart:gend
         mu_hat = reshape(tmp,[d,K])';
     end
     
+    % Run the algorithm to estimate the block membership of vertices
     for model = 2
         for c = 1:2
             savefile = ['./results/results-SBM-model' num2str(model) ...

@@ -1,6 +1,7 @@
 function [error_rate_map,tau_map,tau_result] = MC(n,K,d,A,mu_hat,...
     Sigma_hat,tau_hat,rho,tau_star,nu_star,Sigma_star,theta,NBurnIn,...
     NConverge,c,model,homophily,identifiability)
+% Inference using 1 MCMC chain.
 
 rng shuffle;
 
