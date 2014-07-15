@@ -20,6 +20,8 @@ maxIteration = nBurnIn + nConverge;
 iterOut = 0;
 isRestart = 0;
 
+tauCompare = randi([1, nBlock], 1, nVertex);
+
 while (~isConverge) || (iterOut <= nConverge)
     % If it is the beginning of the chain, initialize the parameters. Chain
     % 1 is using a fixed initialization, so when restart=1, it is better to
@@ -96,11 +98,11 @@ while (~isConverge) || (iterOut <= nConverge)
     iterOut = iterOut + nConverge;
     
     % --- GR test ---
-    Q(:, 1) = mean(repmat(tauStar, nConverge, 1) ~= tmpTau1, 2);
-    Q(:, 2) = mean(repmat(tauStar, nConverge, 1) ~= tmpTau2, 2);
+    Q(:, 1) = mean(repmat(tauCompare, nConverge, 1) ~= tmpTau1, 2);
+    Q(:, 2) = mean(repmat(tauCompare, nConverge, 1) ~= tmpTau2, 2);
     % Potential Scale Reduction Factor
     % Rhat = psrf(Q(:,1),Q(:,2));
-    bootRhat = bootstrap(Q(:,1),Q(:,2), nboot);
+    bootRhat = bootstrap(Q(:, 1), Q(:, 2), nboot, nConverge);
     bootRhat = sort(bootRhat);
     if bootRhat(0.95*nboot) < 1.1
         isConverge = 1;
@@ -117,16 +119,19 @@ tauResult = tmpTau1;
 tauMap = mode(tauResult);
 
 errorRateMap = nVertex;
-permutation = perms(1:nBlock);
-for iFactorial = 1:factorial(nBlock)
-    pos = permutation(iFactorial,:);
-    tau_tmp = tauMap;
-    for jBlock = 1:nBlock
-        nv = (tauMap == pos(jBlock));
-        tau_tmp(nv) = jBlock;
-    end
-    if sum(tauStar ~= tau_tmp) < errorRateMap
-        errorRateMap = sum(tauStar ~= tau_tmp);
+
+if (tauStar ~= 0)
+    permutation = perms(1:nBlock);
+    for iFactorial = 1:factorial(nBlock)
+        pos = permutation(iFactorial,:);
+        tau_tmp = tauMap;
+        for jBlock = 1:nBlock
+            nv = (tauMap == pos(jBlock));
+            tau_tmp(nv) = jBlock;
+        end
+        if sum(tauStar ~= tau_tmp) < errorRateMap
+            errorRateMap = sum(tauStar ~= tau_tmp);
+        end
     end
 end
 
