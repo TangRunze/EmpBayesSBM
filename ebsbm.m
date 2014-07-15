@@ -1,6 +1,6 @@
 function [] = ebsbm(nBlock, gStart, gEnd, scaleCovarianceStart, ...
-    scaleCovarianceEnd, nCore, nBurnIn, nConverge, dimLatentPosition, ...
-    isHomophily, isIdentifiable, theta)
+    scaleCovarianceEnd, hasLabel, nCore, nBurnIn, nConverge, ...
+    dimLatentPosition, isHomophily, isIdentifiable, theta)
 
 % EmpBayesSBM implements an empirical Bayes methodology for estimation of
 % block memberships of vertices in a random graph drawn from the stochastic
@@ -9,7 +9,8 @@ function [] = ebsbm(nBlock, gStart, gEnd, scaleCovarianceStart, ...
 % There are two versions of EmpBayesSBM: simulation & real data.
 % And this is the real data version.
 % 
-% EBSBM(nBlock, gStart, gEnd, scaleCovarianceStart, scaleCovarianceEnd)
+% EBSBM(nBlock, gStart, gEnd, scaleCovarianceStart, scaleCovarianceEnd, ...
+%     hasLabel)
 %
 % nBlock selects the number of blocks in the stochastic blockmodel.
 %
@@ -25,11 +26,15 @@ function [] = ebsbm(nBlock, gStart, gEnd, scaleCovarianceStart, ...
 %       scaleCovariance = 4:  n^2
 %       scaleCovariance = 5:  Infinity
 % 
+% hasLabel = 1 means true labels are known. Otherwise truelabels are
+% unknown.
+% Default hasLabel = 0.
+%
 % EXAMPLE: 
-%       EBSBM(3, 1, 10, 4, 5)
+%       EBSBM(3, 1, 10, 4, 5, 1)
 %
 % EBSBM(nBlock, gStart, gEnd, scaleCovarianceStart, scaleCovarianceEnd, ...
-%     nCore)
+%     hasLabel, nCore)
 % 
 % nCore selects the number of cores in parallel programming.
 % nCore = 1 do NOT run the code parallel.
@@ -37,11 +42,11 @@ function [] = ebsbm(nBlock, gStart, gEnd, scaleCovarianceStart, ...
 % Default nCore = 1.
 % 
 % EXAMPLE:
-%       EBSBM(3, 1, 10, 4, 5, 1)     NOT parallel
-%       EBSBM(3, 1, 10, 4, 5, 12)    use 12 cores
+%       EBSBM(3, 1, 10, 4, 5, 1, 1)     NOT parallel
+%       EBSBM(3, 1, 10, 4, 5, 1, 12)    use 12 cores
 %
 % EBSBM(nBlock, gStart, gEnd, scaleCovarianceStart, scaleCovarianceEnd, ...
-%     nCore, nBurnIn, nConverge)
+%     hasLabel, nCore, nBurnIn, nConverge)
 %
 % nBurnIn selects the number of iterations in burn-in part.
 % Default nBurnIn = 19000.
@@ -51,21 +56,21 @@ function [] = ebsbm(nBlock, gStart, gEnd, scaleCovarianceStart, ...
 % Default nConverge = 500.
 %
 % EXAMPLE:
-%       EBSBM(3, 1, 10, 4, 5, 1, 10000, 1000)
+%       EBSBM(3, 1, 10, 4, 5, 1, 1, 10000, 1000)
 %
 % EBSBM(nBlock, gStart, gEnd, scaleCovarianceStart, scaleCovarianceEnd, ...
-%     nCore, nBurnIn, nConverge, dimLatentPosition)
+%     hasLabel, nCore, nBurnIn, nConverge, dimLatentPosition)
 %
 % dimLatentPosition selects the dimension of latent positions.
 % dimLatentPosition should be integers between 1 and nBlock.
 % Default dimLatentPosition = nBlock.
 % 
 % EXAMPLE:
-%       EBSBM(3, 1, 10, 4, 5, 1, 10000, 1000, 2)
+%       EBSBM(3, 1, 10, 4, 5, 1, 1, 10000, 1000, 2)
 %
 % EBSBM(nBlock, gStart, gEnd, scaleCovarianceStart, scaleCovarianceEnd, ...
-%     nCore, nBurnIn, nConverge, dimLatentPosition, isHomophily, ...
-%     isIdentifiable)
+%     hasLabel, nCore, nBurnIn, nConverge, dimLatentPosition, ...
+%     isHomophily, isIdentifiable)
 %
 % isHomophily controls the constraints. 
 % If isHomophily = 1, then it enforces homophily:
@@ -78,17 +83,17 @@ function [] = ebsbm(nBlock, gStart, gEnd, scaleCovarianceStart, ...
 % Default isIdentifiable = 0.
 %
 % EXAMPLE:
-%       EBSBM(3, 1, 10, 4, 5, 1, 10000, 1000, 2, 1, 1)
+%       EBSBM(3, 1, 10, 4, 5, 1, 1, 10000, 1000, 2, 1, 1)
 % 
 % EBSBM(nBlock, gStart, gEnd, scaleCovarianceStart, scaleCovarianceEnd, ...
-%     nCore, nBurnIn, nConverge, dimLatentPosition, isHomophily, ...
-%     isIdentifiable, theta)
+%     hasLabel, nCore, nBurnIn, nConverge, dimLatentPosition, ...
+%     isHomophily, isIdentifiable, theta)
 % 
 % theta selects the hyperparameters for the prior distribution for rho.
 % Default theta = [1, 1, ..., 1] of length nBlock.
 %
 % EXAMPLE:
-%       EBSBM(3, 1, 10, 4, 5, 1, 10000, 1000, 2, 1, 1, [1, 3, 2])
+%       EBSBM(3, 1, 10, 4, 5, 1, 1, 10000, 1000, 2, 1, 1, [1, 3, 2])
 
 % Inference for the stochastic blockmodel is an interesting direction in
 % the statistical community, as well as in various application domains such
@@ -108,12 +113,12 @@ function [] = ebsbm(nBlock, gStart, gEnd, scaleCovarianceStart, ...
 % Oct 2013; Last revision: 15-July-2014
 
 %% --- Default Parameter Setting ---
-if (nargin < 12)
+if (nargin < 13)
     % hyperparameters for the prior distribution for rho (1-by-nBlock)
     theta = ones(1, nBlock);
 end
 
-if (nargin < 11)
+if (nargin < 12)
     % isHomophily controls the constraints. 
     % If isHomophily = 1, then it enforces homophily:
     %       <nu_i,nu_j> <= <nu_i,nu_i>  for any i, j
@@ -124,25 +129,25 @@ if (nargin < 11)
     isIdentifiable = 0;
 end
 
-if (nargin < 9)
+if (nargin < 10)
     % dimLatentPosition selects the dimension of latent positions.
     dimLatentPosition = nBlock;
 end
 
-if (nargin < 8)
+if (nargin < 9)
     % number of iterations in burn-in part
     nBurnIn = 19000;
     % Take the last NConverge iterations as the results after the burn-in part
     nConverge = 500;
 end
 
-if (nargin < 6)
+if (nargin < 7)
     % nCore selects the number of cores in parallel programming.
     % nCore = 1 do NOT run the code parallel.
     nCore = 1;
 end
 
-if ~ismember(nargin, [5, 6, 8, 9, 11, 12])
+if ~ismember(nargin, [6, 7, 9, 10, 12, 13])
     error('Invalid number of input arguments!')
 end
 
@@ -223,8 +228,8 @@ modelType = 2;
 for iGraph = gStart:gEnd
     % Generate data if there does not exist one, otherwise read the
     % existing data.
-    [nVertex, adjMatrix, muHat, sigmaHat, tauHat, pTauHat] = ...
-        datareader(nBlock, dimLatentPosition, iGraph);
+    [nVertex, adjMatrix, muHat, sigmaHat, tauHat, pTauHat, tauStar] = ...
+        datareader(nBlock, dimLatentPosition, iGraph, hasLabel);
     % nVertex selects the number of vertices in the graph
     % Adjacency matrix A (n-by-n) symmetric
     % cluster means mu_hat (K-by-d)
@@ -261,13 +266,13 @@ for iGraph = gStart:gEnd
             if (modelType == 1) || (scaleCovariance == 5)
                 [errorRate, tau, tauResult] = mcmc1chain(nVertex, ...
                     nBlock, dimLatentPosition, adjMatrix, muHat, ...
-                    sigmaHat, tauHat, 0, 0, 0, 0, theta, nBurnIn, ...
+                    sigmaHat, tauHat, 0, tauStar, 0, 0, theta, nBurnIn, ...
                     nConverge*2, scaleCovariance, modelType, ...
                     isHomophily, isIdentifiable);
             else
                 [errorRate, tau, tauResult] = mcmc2chains(nVertex, ...
                     nBlock, dimLatentPosition, adjMatrix, muHat, ...
-                    sigmaHat, tauHat, pTauHat, 0, 0, 0, 0, theta, ...
+                    sigmaHat, tauHat, pTauHat, 0, tauStar, 0, 0, theta, ...
                     nBurnIn, nConverge, scaleCovariance, modelType, ...
                     isHomophily, isIdentifiable);
             end

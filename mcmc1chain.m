@@ -69,16 +69,19 @@ end
 tauMap = mode(tauResult);
 
 errorRateMap = nVertex;
-permutation = perms(1:nBlock);
-for iFactorial = 1:factorial(nBlock)
-    position = permutation(iFactorial, :);
-    tmpTau = tauMap;
-    for jBlock = 1:nBlock
-        nv = (tauMap == position(jBlock));
-        tmpTau(nv) = jBlock;
-    end
-    if sum(tauStar ~= tmpTau) < errorRateMap
-        errorRateMap = sum(tauStar ~= tmpTau);
+
+if (tauStar ~= 0)
+    permutation = perms(1:nBlock);
+    for iFactorial = 1:factorial(nBlock)
+        position = permutation(iFactorial, :);
+        tmpTau = tauMap;
+        for jBlock = 1:nBlock
+            nv = (tauMap == position(jBlock));
+            tmpTau(nv) = jBlock;
+        end
+        if sum(tauStar ~= tmpTau) < errorRateMap
+            errorRateMap = sum(tauStar ~= tmpTau);
+        end
     end
 end
 
