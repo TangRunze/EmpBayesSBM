@@ -1,11 +1,11 @@
 # History files
-.Rhistory
+*.Rhistory
 
 # MATLAB data files
-.mat
+*.mat
 
 # MATLAB backup files
-.asv
+*.asv
 
 # Bash files
-.sh
+*.sh

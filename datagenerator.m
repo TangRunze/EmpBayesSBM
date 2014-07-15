@@ -55,6 +55,10 @@ if exist(['data/graph' int2str(iGraph) '.mat'], 'file') == 0
         'muHat', 'sigmaHat');
 else
     % Read the existing data
-    data = load(['data/graph' int2str(iter) '.mat']);
+    data = load(['data/graph' int2str(iGraph) '.mat']);
     adjMatrix = data.adjMatrix;
+    muHat = data.muHat;
+    sigmaHat = data.sigmaHat;
+    tauHat = data.tauHat;
+    pTauHat = data.pTauHat;
 end
