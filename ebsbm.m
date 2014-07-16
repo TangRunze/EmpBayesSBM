@@ -210,9 +210,11 @@ if (any(theta <= 0))
 end
 
 %% --- Parallel Computing ---
-if isempty(gcp('nocreate'))
-    parpool(nCore);
-end
+% if isempty(gcp('nocreate'))
+%     parpool(nCore);
+% end
+delete(gcp('nocreate'))
+parpool(nCore);
 
 %% --- Parameters Setting ---
 % modelType selects the type of model.
@@ -225,7 +227,7 @@ modelType = 2;
 
 %% Monte Carlo Simulation
 
-for iGraph = gStart:gEnd
+parfor iGraph = gStart:gEnd
     % Generate data if there does not exist one, otherwise read the
     % existing data.
     [nVertex, adjMatrix, muHat, sigmaHat, tauHat, pTauHat, tauStar] = ...
@@ -259,10 +261,10 @@ for iGraph = gStart:gEnd
     
     % Run the algorithm to estimate the block membership of vertices
     for scaleCovariance = scaleCovarianceStart:scaleCovarianceEnd
-        savefile = ['./results/results-SBM-model' ...
+        saveFile = ['./results/results-SBM-model' ...
             num2str(modelType) '-scale' num2str(scaleCovariance) ...
             '-real-graph' num2str(iGraph) '.mat'];
-        if exist(savefile, 'file') == 0
+        if exist(saveFile, 'file') == 0
             if (modelType == 1) || (scaleCovariance == 5)
                 [errorRate, tau, tauResult] = mcmc1chain(nVertex, ...
                     nBlock, dimLatentPosition, adjMatrix, muHat, ...
@@ -276,7 +278,7 @@ for iGraph = gStart:gEnd
                     nBurnIn, nConverge, scaleCovariance, modelType, ...
                     isHomophily, isIdentifiable);
             end
-            parsave(savefile, errorRate, tau, tauResult);
+            parsave(saveFile, errorRate, tau, tauResult);
         end
     end
 end

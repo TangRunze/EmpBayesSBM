@@ -271,9 +271,11 @@ if (any(theta <= 0))
 end
 
 %% --- Parallel Computing ---
-if isempty(gcp('nocreate'))
-    parpool(nCore);
-end
+% if isempty(gcp('nocreate'))
+%     parpool(nCore);
+% end
+delete(gcp('nocreate'))
+parpool(nCore);
 
 %% --- Parameters Setting ---
 
@@ -337,11 +339,11 @@ parfor iGraph = gStart:gEnd
     % Run the algorithm to estimate the block membership of vertices
     for modelType = modelTypeStart:modelTypeEnd
         for scaleCovariance = scaleCovarianceStart:scaleCovarianceEnd
-            savefile = ['./results/results-SBM-model' ...
+            saveFile = ['./results/results-SBM-model' ...
                 num2str(modelType) '-scale' num2str(scaleCovariance) ...
                 '-sim-eps' num2str(epsilonInB) '-graph' num2str(iGraph) ...
                 '.mat'];
-            if exist(savefile, 'file') == 0
+            if exist(saveFile, 'file') == 0
                 if (modelType == 1) || (scaleCovariance == 5)
                     [errorRate, tau, tauResult] = mcmc1chain(nVertex, ...
                         nBlock, dimLatentPosition, adjMatrix, muHat, ...
@@ -357,7 +359,7 @@ parfor iGraph = gStart:gEnd
                         scaleCovariance, modelType, isHomophily, ...
                         isIdentifiable);
                 end
-                parsave(savefile, errorRate, tau, tauResult);
+                parsave(saveFile, errorRate, tau, tauResult);
             end
         end
     end
