@@ -307,7 +307,8 @@ parfor iGraph = gStart:gEnd
     % Generate data if there does not exist one, otherwise read the
     % existing data.
     [adjMatrix, muHat, sigmaHat, tauHat, pTauHat] = ...
-        datagenerator(nVertex, nBlock, dimLatentPosition, B, rho, iGraph);
+        datagenerator(nVertex, nBlock, dimLatentPosition, B, rho, ...
+        epsilonInB, iGraph);
     % Adjacency matrix A (n-by-n) symmetric
     % cluster means mu_hat (K-by-d)
     % cluster covariances Sigma_hat (d-by-d-by-K)
@@ -338,7 +339,8 @@ parfor iGraph = gStart:gEnd
         for scaleCovariance = scaleCovarianceStart:scaleCovarianceEnd
             savefile = ['./results/results-SBM-model' ...
                 num2str(modelType) '-scale' num2str(scaleCovariance) ...
-                '-graph' num2str(iGraph) '.mat'];
+                '-sim-eps' num2str(epsilonInB) '-graph' num2str(iGraph) ...
+                '.mat'];
             if exist(savefile, 'file') == 0
                 if (modelType == 1) || (scaleCovariance == 5)
                     [errorRate, tau, tauResult] = mcmc1chain(nVertex, ...

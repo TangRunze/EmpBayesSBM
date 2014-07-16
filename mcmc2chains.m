@@ -124,13 +124,13 @@ if (tauStar ~= 0)
     permutation = perms(1:nBlock);
     for iFactorial = 1:factorial(nBlock)
         pos = permutation(iFactorial,:);
-        tau_tmp = tauMap;
+        tmpTau = tauMap;
         for jBlock = 1:nBlock
             nv = (tauMap == pos(jBlock));
-            tau_tmp(nv) = jBlock;
+            tmpTau(nv) = jBlock;
         end
-        if sum(tauStar ~= tau_tmp) < errorRateMap
-            errorRateMap = sum(tauStar ~= tau_tmp);
+        if sum(tauStar ~= tmpTau) < errorRateMap
+            errorRateMap = sum(tauStar ~= tmpTau);
         end
     end
 end

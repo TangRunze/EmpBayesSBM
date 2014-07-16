@@ -4,19 +4,19 @@ function [nVertex, adjMatrix, muHat, sigmaHat, tauHat, pTauHat, tauStar]...
 
 tauStar = 0;
 
-if (exist(['data/graph' int2str(iGraph) '.mat'], 'file') == 0)
-    if ((exist(['data/label' int2str(iGraph)], 'file') == 0) && ...
+if (exist(['data/real-graph' int2str(iGraph) '.mat'], 'file') == 0)
+    if ((exist(['data/real-label' int2str(iGraph)], 'file') == 0) && ...
         (hasLabel == 1))
         error(['label' int2str(iGraph) 'does not exist!'])
-    elseif (exist(['data/graph' int2str(iGraph)], 'file') == 0)
+    elseif (exist(['data/real-graph' int2str(iGraph)], 'file') == 0)
         error(['graph' int2str(iGraph) 'does not exist!'])
     else
         % Part 1: Read graph adjacency matrix.
-        adjMatrix = textread(['data/graph' int2str(iGraph)]);
+        adjMatrix = textread(['data/real-graph' int2str(iGraph)]);
         nVertex = size(adjMatrix, 1);
         
         if (hasLabel == 1)
-            tauStar = textread(['data/label' int2str(iGraph)]);
+            tauStar = textread(['data/real-label' int2str(iGraph)]);
             if (length(tauStar) ~= nVertex)
                 error(['label' int2str(iGraph) 'has wrong number!'])
             end
@@ -30,12 +30,13 @@ if (exist(['data/graph' int2str(iGraph) '.mat'], 'file') == 0)
         sigmaHat = gm.Sigma;
         
         % Save the data
-        save(['data/graph' int2str(iGraph)], 'adjMatrix', 'tauHat', ...
-            'pTauHat', 'muHat', 'sigmaHat', 'nVertex', 'tauStar');
+        save(['data/real-graph' int2str(iGraph) '.mat'], 'adjMatrix', ...
+            'tauHat', 'pTauHat', 'muHat', 'sigmaHat', 'nVertex', ...
+            'tauStar');
     end
 else
     % Read the existing data
-    data = load(['data/graph' int2str(iGraph) '.mat']);
+    data = load(['data/real-graph' int2str(iGraph) '.mat']);
     adjMatrix = data.adjMatrix;
     muHat = data.muHat;
     sigmaHat = data.sigmaHat;

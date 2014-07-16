@@ -1,5 +1,6 @@
 function [adjMatrix, muHat, sigmaHat, tauHat, pTauHat] = ...
-    datagenerator(nVertex, nBlock, dimLatentPosition, B, rho, iGraph)
+    datagenerator(nVertex, nBlock, dimLatentPosition, B, rho, ...
+    epsilonInB, iGraph)
 % Generate data if there does not exist one, otherwise read the
 % existing data.
 
@@ -9,7 +10,8 @@ nVectorStarStart = cumsum(nVectorStar);
 nVectorStarStart = [1, nVectorStarStart(1:(end-1)) + 1];
 nVectorStarEnd = cumsum(nVectorStar);
 
-if exist(['data/graph' int2str(iGraph) '.mat'], 'file') == 0
+if exist(['data/sim-eps' num2str(epsilonInB) '-graph' int2str(iGraph) ...
+        '.mat'], 'file') == 0
     
     disp(['Generating graph ' int2str(iGraph) '...'])
     
@@ -51,11 +53,12 @@ if exist(['data/graph' int2str(iGraph) '.mat'], 'file') == 0
     % legend('Cluster 1','Cluster 2','Cluster 3','Location','NW')
     
     % Save the data
-    save(['data/graph' int2str(iGraph)], 'adjMatrix', 'tauHat', 'pTauHat',...
-        'muHat', 'sigmaHat');
+    save(['data/sim-eps' num2str(epsilonInB) '-graph' int2str(iGraph) ...
+        '.mat'], 'adjMatrix', 'tauHat', 'pTauHat', 'muHat', 'sigmaHat');
 else
     % Read the existing data
-    data = load(['data/graph' int2str(iGraph) '.mat']);
+    data = load(['data/sim-eps' num2str(epsilonInB) '-graph' ...
+        int2str(iGraph) '.mat']);
     adjMatrix = data.adjMatrix;
     muHat = data.muHat;
     sigmaHat = data.sigmaHat;

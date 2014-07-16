@@ -230,6 +230,7 @@ for iGraph = gStart:gEnd
     % existing data.
     [nVertex, adjMatrix, muHat, sigmaHat, tauHat, pTauHat, tauStar] = ...
         datareader(nBlock, dimLatentPosition, iGraph, hasLabel);
+    tauStar = tauStar(:)';
     % nVertex selects the number of vertices in the graph
     % Adjacency matrix A (n-by-n) symmetric
     % cluster means mu_hat (K-by-d)
@@ -260,7 +261,7 @@ for iGraph = gStart:gEnd
     for scaleCovariance = scaleCovarianceStart:scaleCovarianceEnd
         savefile = ['./results/results-SBM-model' ...
             num2str(modelType) '-scale' num2str(scaleCovariance) ...
-            '-graph' num2str(iGraph) '.mat'];
+            '-real-graph' num2str(iGraph) '.mat'];
         if exist(savefile, 'file') == 0
             if (modelType == 1) || (scaleCovariance == 5)
                 [errorRate, tau, tauResult] = mcmc1chain(nVertex, ...
