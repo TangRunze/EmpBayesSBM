@@ -1,6 +1,7 @@
 function [] = ebsbm(nBlock, gStart, gEnd, scaleCovarianceStart, ...
     scaleCovarianceEnd, hasLabel, nCore, nBurnIn, nConverge, ...
-    dimLatentPosition, isHomophily, isIdentifiable, theta)
+    dimLatentPosition, isHomophily, isIdentifiable, theta, ...
+    diagonalAugmentation)
 
 % EmpBayesSBM implements an empirical Bayes methodology for estimation of
 % block memberships of vertices in a random graph drawn from the stochastic
@@ -94,6 +95,19 @@ function [] = ebsbm(nBlock, gStart, gEnd, scaleCovarianceStart, ...
 %
 % EXAMPLE:
 %       EBSBM(3, 1, 10, 4, 5, 1, 1, 10000, 1000, 2, 1, 1, [1, 3, 2])
+%
+% EBSBM(nBlock, gStart, gEnd, scaleCovarianceStart, scaleCovarianceEnd, ...
+%     hasLabel, nCore, nBurnIn, nConverge, dimLatentPosition, ...
+%     isHomophily, isIdentifiable, theta, diagonalAugmentation)
+% 
+% diagonalAugmentation = 1 means using diagonal augmentation when
+% preprocessing the data.
+% Default diagonalAugmentation = 1.
+% 
+% EXAMPLE:
+%       EBSBM(3, 1, 10, 4, 5, 1, 1, 10000, 1000, 2, 1, 1, [1, 3, 2], 0)
+
+
 
 % Inference for the stochastic blockmodel is an interesting direction in
 % the statistical community, as well as in various application domains such
@@ -113,6 +127,12 @@ function [] = ebsbm(nBlock, gStart, gEnd, scaleCovarianceStart, ...
 % Oct 2013; Last revision: 15-July-2014
 
 %% --- Default Parameter Setting ---
+if (nargin < 14)
+    % diagonalAugmentation = 1 means using diagonal augmentation when
+    % preprocessing the data.
+    diagonalAugmentation = 1;
+end
+
 if (nargin < 13)
     % hyperparameters for the prior distribution for rho (1-by-nBlock)
     theta = ones(1, nBlock);
@@ -147,7 +167,7 @@ if (nargin < 7)
     nCore = 1;
 end
 
-if ~ismember(nargin, [6, 7, 9, 10, 12, 13])
+if ~ismember(nargin, [6, 7, 9, 10, 12, 13, 14])
     error('Invalid number of input arguments!')
 end
 
@@ -209,6 +229,11 @@ if (any(theta <= 0))
     error('Hyperparameters should be positive!')
 end
 
+if ((diagonalAugmentation ~= 0) && (diagonalAugmentation ~= 1))
+    error('diagonalAugmentation should be either 0 or 1!')
+end
+
+
 %% --- Parallel Computing ---
 % if isempty(gcp('nocreate'))
 %     parpool(nCore);
@@ -231,7 +256,8 @@ parfor iGraph = gStart:gEnd
     % Generate data if there does not exist one, otherwise read the
     % existing data.
     [nVertex, adjMatrix, muHat, sigmaHat, tauHat, pTauHat, tauStar] = ...
-        datareader(nBlock, dimLatentPosition, iGraph, hasLabel);
+        datareader(nBlock, dimLatentPosition, iGraph, hasLabel, ...
+        diagonalAugmentation);
     tauStar = tauStar(:)';
     % nVertex selects the number of vertices in the graph
     % Adjacency matrix A (n-by-n) symmetric
