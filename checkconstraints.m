@@ -1,4 +1,5 @@
-function isValid = checkconstraints(nu, requireHomophily, requireIdentifiability)
+function isValid = checkconstraints(nu, requireHomophily, ...
+    requireIdentifiability)
 % Check if nu*nu' satisfies the probability constraints
 % 0 <= <nu_i, nu_j> <= 1
 % If homophily = 1, then it also enforces homophily
@@ -17,8 +18,8 @@ for iBlock = 1:nBlock
         isIdentifiable = ((iBlock > jBlock) && ...
             (B(iBlock, iBlock) >= B(jBlock, jBlock)));
         if (~isProbability || ...
-                (requireHomophily == 1)&&(~isHomophily) || ...
-                (requireIdentifiability == 1)&&(~isIdentifiable))
+                (requireHomophily == 1) && (~isHomophily) || ...
+                (requireIdentifiability == 1) && (~isIdentifiable))
             isValid = 0;
             return;
         end

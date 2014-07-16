@@ -290,9 +290,11 @@ for i = 1:nBlock
 end
 
 % true nu (nBlock-by-dimLatentPosition)
-nuStar = chol(B)';
-if (~checkconstraints(nuStar, isHomophily,0))
-    error(['The true latent positions nu derived from the probability' ...
+% nuStar = chol(B)';
+[U, S, ~] = svds(B, dimLatentPosition);
+nuStar = U*sqrt(S);
+if (~checkconstraints(nuStar, isHomophily, isIdentifiable))
+    error(['The true latent positions nu derived from the probability ' ...
         'matrix B does not satisfy the constraints!']);
 end
 
