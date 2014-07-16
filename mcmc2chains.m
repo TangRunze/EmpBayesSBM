@@ -123,10 +123,40 @@ end
 
 %% Calculate Result
 
-tauResult = tmpTau1;
+% tauResult = tmpTau1;
+% tauMap = mode(tauResult);
 
+tauMap1 = mode(tmpTau1);
+tauMap2 = mode(tmpTau2);
+
+% Make use of the 2nd chain.
+errorRateMapBetween = nVertex;
+permutation = perms(1:nBlock);
+
+for iFactorial = 1:factorial(nBlock)
+    pos = permutation(iFactorial, :);
+    tmpTauMap2 = tauMap2;
+    for jBlock = 1:nBlock
+        nv = (tauMap2 == pos(jBlock));
+        tmpTauMap2(nv) = jBlock;
+    end
+    if sum(tauMap1 ~= tmpTauMap2) < errorRateMapBetween
+        errorRateMapBetween = sum(tauMap1 ~= tmpTauMap2);
+        bestFactorial = iFactorial;
+    end
+end
+
+copyTau2 = tmpTau2;
+pos = permutation(bestFactorial, :);
+for iBlock = 1:nBlock
+    nv = (copyTau2 == pos(iBlock));
+    tmpTau2(nv) = iBlock;
+end
+
+tauResult = [tmpTau1; tmpTau2];
 tauMap = mode(tauResult);
 
+% Calculate error rate if tauStar is available.
 errorRateMap = nVertex;
 
 if (tauStar ~= 0)
