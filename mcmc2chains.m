@@ -22,6 +22,15 @@ isRestart = 0;
 
 tauCompare = randi([1, nBlock], 1, nVertex);
 
+% calculation of T0 (1-by-K), true number of vertices in each block
+nVectorHat0 = 0;
+if (tauStar ~= 0)
+    nVectorHat0 = zeros(1, nBlock);
+    for iBlock = 1:nBlock
+        nVectorHat0(iBlock) = sum(tauStar == iBlock);
+    end
+end
+
 while (~isConverge) || (iterOut <= nConverge)
     % If it is the beginning of the chain, initialize the parameters. Chain
     % 1 is using a fixed initialization, so when restart=1, it is better to
@@ -41,7 +50,7 @@ while (~isConverge) || (iterOut <= nConverge)
         % Generate valid initialial nu2 (K-by-d) for chain 2
         nu2 = nugenerator(nVertex, nBlock, dimLatentPosition, nuStar, ...
             sigmaStar, muHat, sigmaHat, scaleCovariance, modelType, ...
-            isHomophily, isIdentifiable, 1);
+            isHomophily, isIdentifiable, 1, nVectorHat0);
         
         % pre-calculation of
         % f2 = <nu2_i,nu2_j>^p*(1-<nu2_i,nu2_j>)^(1-p) (KxKx2)
@@ -62,7 +71,7 @@ while (~isConverge) || (iterOut <= nConverge)
             % Generate valid initialial nu1 (K-by-d) for chain 1
             nu1 = nugenerator(nVertex, nBlock, dimLatentPosition, ...
                 nuStar, sigmaStar, muHat, sigmaHat, scaleCovariance, ...
-                modelType, isHomophily, isIdentifiable, 1);
+                modelType, isHomophily, isIdentifiable, 1, nVectorHat0);
             
             % pre-calculation of
             % f1 = <nu1_i,nu1_j>^p*(1-<nu1_i,nu1_j>)^(1-p) (KxKx2)
@@ -85,11 +94,11 @@ while (~isConverge) || (iterOut <= nConverge)
                 [nu1, f1] = updatenu(nVertex, tau1, nu1, muHat, ...
                     sigmaHat, nuStar, sigmaStar, adjMatrix, f1, nBlock, ...
                     dimLatentPosition, scaleCovariance, modelType, ...
-                    isHomophily, isIdentifiable);
+                    isHomophily, isIdentifiable, nVectorHat0);
                 [nu2, f2] = updatenu(nVertex, tau2, nu2, muHat, ...
                     sigmaHat, nuStar, sigmaStar, adjMatrix, f2, nBlock, ...
                     dimLatentPosition, scaleCovariance, modelType, ...
-                    isHomophily, isIdentifiable);
+                    isHomophily, isIdentifiable, nVectorHat0);
             end
         end
         tmpTau1(iterIn, :) = tau1;
