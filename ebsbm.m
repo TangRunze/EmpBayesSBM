@@ -254,7 +254,6 @@ for iGraph = gStart:gEnd
             projectionconditionfun(x, nBlock, dimLatentPosition, ...
             isHomophily, isIdentifiable));
         muHat = reshape(tmpMuHat, [dimLatentPosition, nBlock])';
-        clear tmpMuHat;
     end
     
     % Run the algorithm to estimate the block membership of vertices

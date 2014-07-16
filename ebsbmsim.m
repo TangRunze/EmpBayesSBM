@@ -303,7 +303,7 @@ sigmaStar = covariancecalculator(xHat, rho);
 
 %% Monte Carlo Simulation
 
-for iGraph = gStart:gEnd
+parfor iGraph = gStart:gEnd
     % Generate data if there does not exist one, otherwise read the
     % existing data.
     [adjMatrix, muHat, sigmaHat, tauHat, pTauHat] = ...
@@ -331,7 +331,6 @@ for iGraph = gStart:gEnd
             projectionconditionfun(x, nBlock, dimLatentPosition, ...
             isHomophily, isIdentifiable));
         muHat = reshape(tmpMuHat, [dimLatentPosition, nBlock])';
-        clear tmpMuHat;
     end
     
     % Run the algorithm to estimate the block membership of vertices
