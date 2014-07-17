@@ -1,7 +1,7 @@
-function [errorRateMap, tauMap, tauResult] = mcmc1chain(nVertex, nBlock, ...
-    dimLatentPosition, adjMatrix, muHat, sigmaHat, tauHat, rho, ...
-    tauStar, nuStar, sigmaStar, theta, nBurnIn, nConverge, ...
-    scaleCovariance, modelType, isHomophily, isIdentifiable)
+function [errorRateMap, tauMap, tauConfidence, tauResult] = ...
+    mcmc1chain(nVertex, nBlock, dimLatentPosition, adjMatrix, muHat, ...
+    sigmaHat, tauHat, rho, tauStar, nuStar, sigmaStar, theta, nBurnIn, ...
+    nConverge, scaleCovariance, modelType, isHomophily, isIdentifiable)
 % Inference using 1 MCMC chain.
 
 rng shuffle;
@@ -76,6 +76,9 @@ while (iter < nConverge)
 end
 
 tauMap = mode(tauResult);
+
+% Calculate confidence of estimation.
+tauConfidence = sum(tauResult == repmat(tauMap, nConverge, 1))/nConverge;
 
 errorRateMap = nVertex;
 

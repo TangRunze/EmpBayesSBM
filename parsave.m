@@ -1,4 +1,4 @@
-function  parsave(fName, errorRate, tau, tauResult)
+function  parsave(fName, errorRate, tau, tauConfidence, tauResult)
 % save data
-    save(fName, 'errorRate', 'tau', 'tauResult')
+    save(fName, 'errorRate', 'tau', 'tauConfidence', 'tauResult')
 end
