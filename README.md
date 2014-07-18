@@ -111,6 +111,7 @@ EXAMPLE:
 
 
 ========== simulation version ==========
+
 EBSBMSIM(nVertex, nBlock, epsilonInB, gStart, gEnd, ...
     modelTypeStart, modelTypeEnd, scaleCovarianceStart,
     scaleCovarianceEnd)
