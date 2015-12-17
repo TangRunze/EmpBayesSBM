@@ -86,39 +86,60 @@ ylabel('Classification Error', 'FontSize', 12)
 labels = {'', '0', 'n', 'n*n_k', 'n^2', 'Infinity', ''};
 set(gca,'XTickLabel',labels)
 
-%% --- Seperate Analysis ---
+%% --- Paired Test ---
 
-% Parameter Setting
-nVertex = 150;
-modelType = 1;
-scaleCovariance = 1;
-epsilon = 0.1;
-gStart = 1;
-gEnd = 48;
+% Alternative hypothesis: pair1 < pair2.
 
-ind = [];
+modelTypePair1 = 2;
+scaleCovariancePair1 = 2;
+
+modelTypePair2 = 2;
+scaleCovariancePair2 = 3;
+
+indPair = [];
 for iGraph = gStart:gEnd
-    if exist(['./results/results-SBM-model' num2str(modelType) '-scale' ...
-            num2str(scaleCovariance) '-sim-n' num2str(nVertex) '-eps' ...
-            num2str(epsilon) '-graph' num2str(iGraph) '.mat'])
-        ind = [ind iGraph];
+    if exist(['./results/results-SBM-model' num2str(modelTypePair1) ...
+            '-scale' num2str(scaleCovariancePair1) '-sim-n' ...
+            num2str(nVertex) '-eps' num2str(epsilon) '-graph' ...
+            num2str(iGraph) '.mat']) && ...
+            exist(['./results/results-SBM-model' num2str(modelTypePair2)...
+            '-scale' num2str(scaleCovariancePair2) '-sim-n' ...
+            num2str(nVertex) '-eps' num2str(epsilon) '-graph' ...
+            num2str(iGraph) '.mat'])
+        indPair = [indPair iGraph];
     end
 end
 
-maxIter = length(ind);
+maxIterPair = length(indPair);
 
-if ((modelType == 2) && (scaleCovariance == 2))
-    errorAsge = zeros(1, maxIter);
-    for iInd = 1:maxIter
-        load(['./results/results-SBM-model' num2str(modelType) '-scale' ...
-            num2str(scaleCovariance) '-sim-n' num2str(nVertex) '-eps' ...
-            num2str(epsilon) '-graph' num2str(ind(iInd)) '.mat']);
-        errorAsge(iInd) = errorRate;
-    end
-    mean(errorAsge)
-    [mean(errorAsge) - 1.96*std(errorAsge)/sqrt(maxIter), ...
-        mean(errorAsge) + 1.96*std(errorAsge)/sqrt(maxIter)]
-    median(errorAsge)
+errorPair = zeros(2, maxIterPair);
+
+for iIndPair = 1:maxIterPair
+    load(['./results/results-SBM-model' num2str(modelTypePair1) ...
+        '-scale' num2str(scaleCovariancePair1) '-sim-n' ...
+        num2str(nVertex) '-eps' num2str(epsilon) '-graph' ...
+        num2str(ind(iIndPair)) '.mat']);
+    errorPair(1, iIndPair) = errorRate;
+    load(['./results/results-SBM-model' num2str(modelTypePair2) ...
+        '-scale' num2str(scaleCovariancePair2) '-sim-n' ...
+        num2str(nVertex) '-eps' num2str(epsilon) '-graph' ...
+        num2str(ind(iIndPair)) '.mat']);
+    errorPair(2, iIndPair) = errorRate;
 end
+
+
+% 1-sided sign-test
+tmpStats = sum(errorPair(1, :) < errorPair(2, :));
+pValue = 1 - binocdf(tmpStats - 1, maxIterPair, 0.5)
+
+tmpStats = round((errorPair(1, :) - errorPair(2, :))*nVertex);
+hist(tmpStats, -60:1:60)
+
+
+
+[n, xout] = hist(tmpStats);
+bar(xout, n, 1)
+
+
 
 
