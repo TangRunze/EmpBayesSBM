@@ -141,7 +141,7 @@ function [] = ebsbmsim(nVertex, nBlock, epsilonInB, gStart, gEnd, ...
 % Author: Runze Tang
 % Johns Hopkins University
 % Email: tangrunze@gmail.com
-% Website: https://github.com/wonderforyou/EmpBayesSBM
+% Website: https://github.com/tangrunze/EmpBayesSBM
 % Oct 2013; Last revision: 17-July-2014
 
 %% --- Default Parameter Setting ---
